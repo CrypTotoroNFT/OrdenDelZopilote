@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zopiplan-cache-v6';
+const CACHE_NAME = 'zopiplan-cache-v7';
 const ASSETS = [
     './',
     './index.html',
@@ -15,6 +15,7 @@ const ASSETS = [
     './kilinito_sad.png',
     './leg_swings.png',
     './supported_squat.png',
+    './air_squat.png',
     './australian_row.png',
     './basket.png',
     './bench_dip.png',

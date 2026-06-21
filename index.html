@@ -9,7 +9,7 @@
 <x-dc>
 <helmet>
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="zopilote_crest_cut.png">
+<link rel="apple-touch-icon" href="zopilote_icon.png">
 <meta name="theme-color" content="#100D09">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -45,7 +45,6 @@
 <sc-if value="{{ showCeleb }}">
   <div style="position:fixed;inset:0;background:rgba(11,9,6,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;animation:zpFade .3s ease both">
     <div style="background:linear-gradient(160deg,#1d1810,#15110b);border:1px solid rgba(201,162,75,0.35);border-radius:26px;padding:30px 24px;max-width:380px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,0.6);animation:zpScale .38s cubic-bezier(.34,1.56,.64,1) both;position:relative">
-      <img src="vulture_jovial_cut.png" alt="El Zopilote" style="position:absolute;top:-26px;right:-6px;width:76px;height:76px;object-fit:contain;opacity:0.55;filter:drop-shadow(0 6px 11px rgba(0,0,0,0.4));animation:zpSway 4.6s ease-in-out infinite;transform-origin:bottom center;z-index:4;pointer-events:none">
       <div style="position:relative;width:124px;height:124px;border-radius:22px;overflow:hidden;border:2px solid #C9A24B;animation:zpGlow 2.2s infinite ease-in-out">
         {{ trophyEl }}
         <div style="position:absolute;inset:0;background:#C9A24B;mix-blend-mode:color;opacity:0.45"></div>
@@ -306,7 +305,7 @@ class Component extends DCLogic {
       {img:"walk.png",title:"Caminata de calentamiento",desc:"10 minutos a buen ritmo antes de correr.",volume:"10 min",sets:1},
       {img:"carrera.png",title:"Aceleraciones progresivas",desc:"Pasadas de 50–60 m con aceleración hasta el 75–80% y desaceleración controlada. Camina de vuelta.",volume:"6–8 pasadas",sets:6}]},
     6:{name:"Fuerza · Piernas",type:"Cadena posterior",label:"Sábado · Día 6",proc:"Día de piernas. Tiembla la tierra; el Zopilote, allá arriba, sonríe.",ex:[
-      {img:"sumo_squat.png",title:"Sentadillas al aire",desc:"Baja la cadera solo hasta donde puedas mantener la espalda completamente recta, sin redondear la zona lumbar.",volume:"3 × 12–15",sets:3},
+      {img:"air_squat.png",title:"Sentadillas al aire",desc:"Baja la cadera solo hasta donde puedas mantener la espalda completamente recta, sin redondear la zona lumbar.",volume:"3 × 12–15",sets:3},
       {img:"reverse_lunge.png",title:"Zancadas hacia atrás",desc:"Paso largo hacia atrás bajando la rodilla con control. Alterna piernas. Cero impacto, excelente para el glúteo.",volume:"3 × 10 / pierna",sets:3},
       {img:"sumo_squat.png",title:"Sentadillas sumo",desc:"Pies más abiertos que los hombros, puntas a 45°. Baja la cadera con torso erguido empujando rodillas afuera.",volume:"3 × 10–12",sets:3}]},
     7:{name:"Descanso Activo",type:"Recuperación",label:"Domingo · Día 7",proc:"Descanso activo. Pasea, respira, regenera. Así lo dispone la Orden.",ex:[
