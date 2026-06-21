@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="zopilote_crest_cut.png">
+<meta name="theme-color" content="#100D09">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Zopiplan">
+<meta name="mobile-web-app-capable" content="yes">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker registrado:', reg.scope))
+        .catch(err => console.error('Error Service Worker:', err));
+    });
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:#100D09;font-family:'Space Grotesk',system-ui,sans-serif}
+  @keyframes zpFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes zpScale{from{opacity:0;transform:scale(.88) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  @keyframes zpGlow{0%,100%{box-shadow:0 0 22px rgba(201,162,75,.25)}50%{box-shadow:0 0 38px rgba(201,162,75,.5)}}
+  @keyframes zpSway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg) translateY(-3px)}}
+  @keyframes zpNext{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes zpPrev{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</helmet>
+<div style="background:#100D09;min-height:100vh;display:flex;justify-content:center;color:#F3EEE3;font-family:'Space Grotesk',system-ui,sans-serif">
+<canvas ref="{{ canvasRef }}" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999"></canvas>
+
+<!-- CELEBRATION MODAL -->
+<sc-if value="{{ showCeleb }}">
+  <div style="position:fixed;inset:0;background:rgba(11,9,6,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;animation:zpFade .3s ease both">
+    <div style="background:linear-gradient(160deg,#1d1810,#15110b);border:1px solid rgba(201,162,75,0.35);border-radius:26px;padding:30px 24px;max-width:380px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,0.6);animation:zpScale .38s cubic-bezier(.34,1.56,.64,1) both;position:relative">
+      <img src="vulture_jovial_cut.png" alt="El Zopilote" style="position:absolute;top:-26px;right:-6px;width:76px;height:76px;object-fit:contain;opacity:0.55;filter:drop-shadow(0 6px 11px rgba(0,0,0,0.4));animation:zpSway 4.6s ease-in-out infinite;transform-origin:bottom center;z-index:4;pointer-events:none">
+      <div style="position:relative;width:124px;height:124px;border-radius:22px;overflow:hidden;border:2px solid #C9A24B;animation:zpGlow 2.2s infinite ease-in-out">
+        {{ trophyEl }}
+        <div style="position:absolute;inset:0;background:#C9A24B;mix-blend-mode:color;opacity:0.45"></div>
+      </div>
+      <span style="display:inline-flex;align-items:center;gap:8px;background:rgba(201,162,75,0.14);border:1px solid rgba(201,162,75,0.35);color:#E8C878;padding:6px 18px;border-radius:99px;font-weight:700;font-size:1.05rem">★ {{ streak }} días de orden</span>
+      <h2 style="font-family:'Libre Caslon Display',serif;font-size:1.7rem;color:#F3EEE3;line-height:1.15">La Orden te honra</h2>
+      <p style="color:#9A9284;font-size:0.9rem;line-height:1.55">Has cumplido el 100% del decreto de hoy. El Zopilote despliega las alas en señal de aprobación, y tu espalda lo agradece en silencio.</p>
+      <button onClick="{{ onShare }}" style="background:linear-gradient(135deg,#25d366,#128c7e);border:none;color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:0.92rem;padding:13px;border-radius:13px;cursor:pointer;width:100%;box-shadow:0 6px 18px rgba(37,211,102,0.3)">Proclamar la hazaña en WhatsApp</button>
+      <button onClick="{{ onCloseCeleb }}" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#CDC4B5;font-family:'Space Grotesk';font-weight:600;font-size:0.92rem;padding:13px;border-radius:13px;cursor:pointer;width:100%">Como disponga la Orden</button>
+    </div>
+  </div>
+</sc-if>
+
+<!-- DOG MODAL -->
+<sc-if value="{{ showDog }}">
+  <div style="position:fixed;inset:0;background:rgba(11,9,6,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;animation:zpFade .3s ease both">
+    <div style="background:linear-gradient(160deg,#1d1810,#15110b);border:1px solid rgba(201,162,75,0.35);border-radius:26px;padding:30px 24px;max-width:380px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,0.6);animation:zpScale .38s cubic-bezier(.34,1.56,.64,1) both">
+      <div style="position:relative;width:124px;height:124px;border-radius:22px;overflow:hidden;border:2px solid #C9A24B;animation:zpGlow 2.2s infinite ease-in-out">
+        {{ kilEl }}
+        <div style="position:absolute;inset:0;background:#C9A24B;mix-blend-mode:color;opacity:0.45"></div>
+      </div>
+      <span style="font-size:0.64rem;letter-spacing:0.18em;text-transform:uppercase;color:#A99772;font-weight:600">{{ kilinitoTitle }}</span>
+      <h2 style="font-family:'Libre Caslon Display',serif;font-size:1.7rem;color:#F3EEE3;line-height:1.15">Su Excelencia ha paseado</h2>
+      <p style="color:#9A9284;font-size:0.9rem;line-height:1.55">El protocolo se ha cumplido. Un Kilinito paseado es un Kilinito soberano, y un barrio en paz. Tu cadena posterior, además, te lo agradece.</p>
+      <button onClick="{{ onCloseDog }}" style="background:rgba(201,162,75,0.14);border:1px solid #C9A24B;color:#E8C878;font-family:'Space Grotesk';font-weight:700;font-size:0.92rem;padding:13px;border-radius:13px;cursor:pointer;width:100%">¡Buen chico!</button>
+    </div>
+  </div>
+</sc-if>
+
+<div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px;padding:20px 16px 90px 16px">
+
+  <!-- HEADER -->
+  <header style="display:flex;align-items:center;gap:13px;padding:4px 2px 2px 2px">
+    <div style="width:46px;height:46px;border-radius:50%;border:1px solid rgba(201,162,75,0.5);background:radial-gradient(120% 120% at 30% 25%,#241d14 0%,#15110b 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 0 0 3px #100D09,0 0 0 1px rgba(201,162,75,0.25)">
+      <img src="zopilote_crest_cut.png" alt="Zopilote" style="width:36px;height:36px;display:block;object-fit:contain">
+    </div>
+    <div style="display:flex;flex-direction:column;line-height:1.05">
+      <span style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:-0.02em;color:#F3EEE3">Zopiplan</span>
+      <span style="font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;color:#8C8475;font-weight:500;margin-top:2px">Orden del Zopilote</span>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:7px;background:rgba(201,162,75,0.08);border:1px solid rgba(201,162,75,0.28);padding:6px 12px;border-radius:999px">
+      <span style="width:7px;height:7px;border-radius:50%;background:#C9A24B;box-shadow:0 0 8px rgba(201,162,75,0.8)"></span>
+      <span style="font-size:0.92rem;font-weight:700;color:#E8C878">{{ streak }}</span>
+      <span style="font-size:0.7rem;color:#A99772;letter-spacing:0.04em">días</span>
+    </div>
+  </header>
+
+  <!-- HERO / PROCLAMA -->
+  <div style="position:relative;border-radius:22px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);background:linear-gradient(160deg,#221A33 0%,#181227 55%,#14100B 100%);padding:22px 20px 20px 20px;box-shadow:0 18px 40px rgba(0,0,0,0.45)">
+    <img src="zopilote_crest_cut.png" alt="" aria-hidden="true" style="position:absolute;top:8px;right:14px;width:80px;height:80px;object-fit:contain;opacity:0.1;pointer-events:none">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="font-size:0.66rem;letter-spacing:0.22em;text-transform:uppercase;color:#9B86C9;font-weight:600">{{ dayLabel }}</span>
+      <span style="width:4px;height:4px;border-radius:50%;background:#4a4458"></span>
+      <span style="font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:#7E7668;font-weight:500">{{ dayType }}</span>
+    </div>
+    <h1 style="font-family:'Libre Caslon Display',serif;font-size:2rem;font-weight:400;line-height:1.08;color:#F3EEE3;letter-spacing:-0.01em">{{ dayName }}</h1>
+    <p style="font-family:'Libre Caslon Display',serif;font-style:italic;font-size:1.02rem;line-height:1.4;color:#C3B8D6;margin-top:12px;max-width:340px">“{{ proclamation }}”</p>
+    <p style="font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:#6F6857;margin-top:6px">— La Orden del Zopilote</p>
+
+    <div style="display:flex;align-items:center;gap:14px;margin-top:20px">
+      <div style="flex-grow:1;height:8px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden">
+        <div style="height:100%;width:{{ progressWidth }};background:linear-gradient(90deg,#8B5CF6,#46B17A);border-radius:99px;box-shadow:0 0 12px rgba(70,177,122,0.4);transition:width .4s ease"></div>
+      </div>
+      <span style="font-size:0.78rem;color:#9A9284;font-weight:500">{{ progressLabel }}</span>
+      <span style="font-family:'Space Grotesk';font-size:1.15rem;font-weight:700;color:#5FBF8E;min-width:42px;text-align:right">{{ progressPct }}</span>
+    </div>
+  </div>
+
+  <!-- DAY SELECTOR -->
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+    <sc-for list="{{ days }}" as="d" hint-placeholder-count="7">
+      <button onClick="{{ d.select }}" style="background:{{ d.bg }};border:1px solid {{ d.border }};border-radius:13px;padding:9px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Space Grotesk';transition:all .2s">
+        <span style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.03em;color:{{ d.sub }};font-weight:500">{{ d.dow }}</span>
+        <span style="font-size:0.88rem;font-weight:700;color:{{ d.fg }}">{{ d.num }}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <!-- WARM-UP (desplegable) -->
+  <sc-if value="{{ hasWarmups }}">
+    <div style="background:#19150F;border:1px solid rgba(255,255,255,0.06);border-radius:14px;overflow:hidden;margin-top:2px">
+      <button onClick="{{ onToggleWarm }}" style="width:100%;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:11px;padding:13px 15px;font-family:'Space Grotesk'">
+        <span style="width:8px;height:8px;border-radius:99px;flex-shrink:0;background:{{ warmDotColor }}"></span>
+        <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.3;flex:1;text-align:left">
+          <span style="font-size:0.9rem;font-weight:700;color:#F3EEE3">Calentamiento</span>
+          <span style="font-size:0.72rem;color:{{ warmSummaryColor }}">{{ warmSummary }}</span>
+        </span>
+        <span style="font-size:1.05rem;color:#9A9284;line-height:1;transition:transform .25s ease;transform:{{ warmChevron }}">⌄</span>
+      </button>
+      <sc-if value="{{ warmOpen }}">
+        <div style="display:flex;flex-direction:column;padding:0 15px 6px 15px">
+          <sc-for list="{{ warmups }}" as="w" hint-placeholder-count="1">
+            <div style="display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid rgba(255,255,255,0.05)">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                <span style="font-size:0.92rem;font-weight:600;color:#E8E1D4">{{ w.title }}</span>
+                <span style="font-size:0.72rem;color:#8C8475;flex-shrink:0">{{ w.volume }}</span>
+              </div>
+              <span style="font-size:0.8rem;color:#9A9284;line-height:1.5">{{ w.desc }}</span>
+              <button onClick="{{ w.toggle }}" style="{{ w.btnStyle }}">{{ w.btnLabel }}</button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- EXERCISE CAROUSEL + TIMER -->
+  <div style="background:#19150F;border:1px solid rgba(255,255,255,0.06);border-radius:22px;overflow:hidden;margin-top:2px;box-shadow:0 14px 34px rgba(0,0,0,0.4)">
+
+    <!-- pager -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 11px 16px">
+      <span style="font-size:0.66rem;letter-spacing:0.18em;text-transform:uppercase;color:#9B86C9;font-weight:600">Ejercicio {{ exNum }} de {{ exTotal }}</span>
+      <div style="display:flex;align-items:center;gap:1px">
+        <sc-for list="{{ dots }}" as="dt" hint-placeholder-count="3">
+          <button onClick="{{ dt.jump }}" style="background:none;border:none;padding:6px 3px;margin:0;cursor:pointer;display:flex;align-items:center">
+            <span style="width:{{ dt.w }};height:6px;border-radius:99px;background:{{ dt.bg }};transition:all .3s ease;display:block"></span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- swipe area -->
+    <div onPointerDown="{{ onSwipeStart }}" onPointerUp="{{ onSwipeEnd }}" style="position:relative;touch-action:pan-y;user-select:none">
+      <div ref="{{ cardRef }}">
+        <div style="position:relative;width:100%;aspect-ratio:1/1;background:#1c2738;overflow:hidden">
+          {{ exImgEl }}
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(16,13,9,0) 58%,rgba(16,13,9,0.82) 100%);pointer-events:none"></div>
+          <span style="position:absolute;left:16px;bottom:13px;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:#C9A24B;font-weight:600">Ejercicio {{ exNum }}</span>
+          <span style="position:absolute;right:16px;bottom:13px;font-size:0.7rem;color:#D8CFC0;font-weight:500;background:rgba(16,13,9,0.6);border:1px solid rgba(255,255,255,0.08);padding:3px 9px;border-radius:99px;backdrop-filter:blur(6px)">{{ exVolume }}</span>
+          <button onClick="{{ onPrevEx }}" style="{{ prevChevStyle }}">‹</button>
+          <button onClick="{{ onNextEx }}" style="{{ nextChevStyle }}">›</button>
+        </div>
+        <div style="padding:15px 17px 16px 17px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="font-size:1.08rem;font-weight:700;color:#F3EEE3;letter-spacing:-0.01em">{{ exTitle }}</span>
+            <sc-if value="{{ activeDone }}">
+              <span style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;background:rgba(70,177,122,0.14);border:1px solid rgba(70,177,122,0.5);color:#5FBF8E;font-size:0.64rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 9px;border-radius:99px">✓ Completo</span>
+            </sc-if>
+          </div>
+          <span style="font-size:0.82rem;color:#9A9284;line-height:1.5">{{ exDesc }}</span>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px">
+            <sc-for list="{{ exSets }}" as="st" hint-placeholder-count="3">
+              <button onClick="{{ st.toggle }}" style="{{ st.style }}">
+                <span>{{ st.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- timer (fijo dentro del marco de la tarjeta) -->
+    <div style="border-top:1px solid rgba(255,255,255,0.06);background:#16120C;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="position:relative;width:46px;height:46px;flex-shrink:0">
+          <svg width="46" height="46" style="display:block">
+            <circle cx="23" cy="23" r="18" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3.5"></circle>
+            <circle cx="23" cy="23" r="18" fill="none" stroke="{{ ringColor }}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="{{ ringCirc }}" stroke-dashoffset="{{ ringOffset }}" transform="rotate(-90 23 23)" style="transition:stroke-dashoffset .2s linear"></circle>
+          </svg>
+          <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;color:#E0D8C9">{{ timerDisplay }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;line-height:1.2">
+          <span style="font-size:0.92rem;font-weight:700;color:#F3EEE3">Descanso entre series</span>
+          <span style="font-size:0.74rem;color:#7E7668">{{ timerStatus }}</span>
+        </div>
+        <button onClick="{{ onTimerToggle }}" style="margin-left:auto;background:#8B5CF6;border:none;color:#fff;font-size:0.78rem;font-weight:700;padding:9px 16px;border-radius:10px;cursor:pointer;font-family:'Space Grotesk';box-shadow:0 4px 12px rgba(139,92,246,0.3)">{{ timerBtnLabel }}</button>
+      </div>
+      <div style="display:flex;gap:7px">
+        <button onClick="{{ onPreset60 }}" style="flex:1;background:{{ preset60Bg }};border:1px solid {{ preset60Border }};color:#CDC4B5;font-size:0.76rem;font-weight:600;padding:8px;border-radius:9px;cursor:pointer;font-family:'Space Grotesk'">60s</button>
+        <button onClick="{{ onPreset90 }}" style="flex:1;background:{{ preset90Bg }};border:1px solid {{ preset90Border }};color:#CDC4B5;font-size:0.76rem;font-weight:600;padding:8px;border-radius:9px;cursor:pointer;font-family:'Space Grotesk'">90s</button>
+        <button onClick="{{ onTimerReset }}" style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);color:#9A9284;font-size:0.76rem;font-weight:600;padding:8px;border-radius:9px;cursor:pointer;font-family:'Space Grotesk'">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KILINITO -->
+  <div style="position:relative;border-radius:20px;overflow:hidden;border:1px solid rgba(201,162,75,0.28);background:linear-gradient(155deg,#1d1810 0%,#15110b 100%);padding:16px;display:flex;flex-direction:column;gap:15px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="position:relative;width:62px;height:62px;border-radius:16px;overflow:hidden;flex-shrink:0;border:1px solid rgba(201,162,75,0.4);background:#231B33">
+        {{ kilEl }}
+        <div style="position:absolute;inset:0;background:#C9A24B;mix-blend-mode:color;opacity:0.5"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <span style="font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:#A99772;font-weight:600">Su Excelencia</span>
+        <span style="font-family:'Libre Caslon Display',serif;font-size:1.18rem;color:#E8C878;line-height:1.25">{{ kilinitoTitle }}</span>
+        <span style="font-size:0.76rem;color:#8C8475;line-height:1.4">{{ kilinitoStatus }}</span>
+      </div>
+    </div>
+    <button onClick="{{ toggleDog }}" style="background:{{ dogBg }};border:1px solid {{ dogBorder }};color:{{ dogFg }};font-family:'Space Grotesk';font-size:0.9rem;font-weight:700;padding:12px;border-radius:13px;cursor:pointer;width:100%;transition:all .2s">{{ dogLabel }}</button>
+  </div>
+
+  <!-- CONSISTENCIA / HISTORIAL -->
+  <div style="border-radius:18px;border:1px solid rgba(255,255,255,0.06);background:#16120C;padding:17px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <span style="font-family:'Space Grotesk';font-weight:700;font-size:0.95rem;color:#F3EEE3">Crónica de la Constancia</span>
+      <span style="display:flex;align-items:center;gap:6px;background:rgba(201,162,75,0.1);border:1px solid rgba(201,162,75,0.28);color:#E8C878;font-size:0.74rem;font-weight:700;padding:4px 11px;border-radius:99px">★ {{ streak }} días</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px">
+      <sc-for list="{{ dowHeaders }}" as="h" hint-placeholder-count="7">
+        <span style="text-align:center;font-size:0.64rem;font-weight:600;color:#6F6857">{{ h }}</span>
+      </sc-for>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">
+      <sc-for list="{{ historyDays }}" as="hd" hint-placeholder-count="28">
+        <div title="{{ hd.title }}" style="position:relative;aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:600;background:{{ hd.bg }};border:1px solid {{ hd.border }};color:{{ hd.fg }}">
+          <span>{{ hd.num }}</span>
+          <sc-if value="{{ hd.paw }}"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.4rem;opacity:0.5;pointer-events:none">🐾</span></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:9px;font-size:0.68rem;color:#6F6857;font-weight:500">
+      <span>Hace 4 semanas</span>
+      <span>Esta semana</span>
+    </div>
+  </div>
+
+  <!-- REGLA DE ORO -->
+  <div style="border-radius:16px;border:1px solid rgba(255,255,255,0.06);background:#16120C;padding:16px 17px;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <span style="font-family:'Libre Caslon Display',serif;font-size:1.1rem;color:#C9A24B">§</span>
+      <span style="font-family:'Space Grotesk';font-weight:700;font-size:0.95rem;color:#E8C878;letter-spacing:0.01em">La Regla de Oro</span>
+    </div>
+    <p style="font-size:0.82rem;color:#9A9284;line-height:1.5"><strong style="color:#CDC4B5;font-weight:600">Jamás dos días seguidos en falta.</strong> Si el cuerpo flaquea, basta con 5 minutos de calentamiento de pie y 15 de caminata. El hábito es el verdadero escudo de tu espalda — y la Orden no perdona la pereza, pero sí el cansancio.</p>
+  </div>
+
+  <button onClick="{{ onReset }}" style="background:transparent;border:1px solid rgba(193,90,90,0.2);color:rgba(204,130,130,0.7);border-radius:12px;padding:11px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'Space Grotesk';margin-top:2px">Abdicar del linaje</button>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:440,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  canvasRef = React.createRef();
+  cardRef = React.createRef();
+  ringCirc = 2 * Math.PI * 18;
+  dows = ["L","M","M","J","V","S","D"];
+
+  // Calentamiento diario (los mismos 2 ejercicios todos los días)
+  dailyWarmups = [
+    {img:"leg_swings.png", title:"Balanceos de Pierna (Leg Swings)", desc:"Apóyate en un poste o paralela. Balancea una pierna adelante/atrás de forma fluida, luego de lado a lado. Activa glúteos y moviliza la cadera.", volume:"10 + 10 / pierna"},
+    {img:"supported_squat.png", title:"Sentadilla Profunda Soportada", desc:"Agárrate del poste vertical. Déjate caer en sentadilla completa profunda, llevando la cadera abajo y atrás. Relaja la espalda baja para traccionar las vértebras.", volume:"30–45 s"},
+  ];
+
+  routines = {
+    1:{name:"Recreación o Reposo",type:"Juego y recuperación",label:"Lunes · Día 1",proc:"Hoy se permite el juego. Incluso los grandes rapaces planean sin batir las alas.",ex:[{img:"basket.png",title:"Básquetbol recreativo",desc:"Disfrutá tu partido semanal o descansá por completo si la espalda lo pide. El foco: moverte sin dolor.",volume:"Partido o reposo",sets:1}]},
+    2:{name:"Fuerza · Tirón",type:"Espalda y bíceps",label:"Martes · Día 2",proc:"Hoy la espalda se forja. Cuélgate como cuelga el Zopilote de las alturas.",ex:[
+      {img:"dead_hang.png",title:"Cuelgues pasivos (Dead Hangs)",desc:"Cuélgate de la barra alta con brazos estirados y cuerpo relajado. Deja que la gravedad descomprima la columna lumbar.",volume:"3 × máx tiempo",sets:3},
+      {img:"scapular_pull_up.png",title:"Dominadas escapulares",desc:"Colgado de la barra, junta las escápulas hacia abajo y atrás para elevarte sin flexionar los codos. Sostén 1s arriba.",volume:"3 × 8–10",sets:3},
+      {img:"australian_row.png",title:"Remos en paralelas (Australian Rows)",desc:"Cuélgate bajo una paralela con los talones adelante. Tira con la espalda llevando el pecho a la barra.",volume:"3 × 8–12",sets:3}]},
+    3:{name:"Carrera Progresiva",type:"Cardio e isquios",label:"Miércoles · Día 3",proc:"Corre. El Zopilote observa desde la térmica y asiente con solemnidad.",ex:[
+      {img:"walk.png",title:"Caminata de calentamiento",desc:"10 minutos de caminata ligera para lubricar las articulaciones.",volume:"10 min",sets:1},
+      {img:"carrera.png",title:"Aceleraciones progresivas",desc:"Recta de 50–60 m. Acelera hasta el 75–80% a la mitad y desacelera suave. Camina de vuelta para recuperar.",volume:"6–8 pasadas",sets:6}]},
+    4:{name:"Fuerza · Empuje",type:"Pecho y tríceps",label:"Jueves · Día 4",proc:"Empuja. Que tus tríceps honren el linaje de la Orden.",ex:[
+      {img:"incline_pushup.png",title:"Flexiones inclinadas en paralela",desc:"Manos en una paralela, pies en el suelo. Glúteos y abdomen apretados durante todo el recorrido.",volume:"3 × 10–15",sets:3},
+      {img:"support_isometric.png",title:"Soporte isométrico en paralelas",desc:"Brazos estirados sobre las paralelas. Empuja hacia abajo alejando los hombros de las orejas. Abdomen tenso.",volume:"3 × 20–30s",sets:3},
+      {img:"bench_dip.png",title:"Fondos de tríceps en banco",desc:"De espaldas a un banco, manos en el borde y piernas extendidas. Flexiona codos bajando la cadera y empuja.",volume:"3 × 8–12",sets:3}]},
+    5:{name:"Carrera Progresiva",type:"Cardio e isquios",label:"Viernes · Día 5",proc:"Corre de nuevo. La constancia es el plumaje del campeón.",ex:[
+      {img:"walk.png",title:"Caminata de calentamiento",desc:"10 minutos a buen ritmo antes de correr.",volume:"10 min",sets:1},
+      {img:"carrera.png",title:"Aceleraciones progresivas",desc:"Pasadas de 50–60 m con aceleración hasta el 75–80% y desaceleración controlada. Camina de vuelta.",volume:"6–8 pasadas",sets:6}]},
+    6:{name:"Fuerza · Piernas",type:"Cadena posterior",label:"Sábado · Día 6",proc:"Día de piernas. Tiembla la tierra; el Zopilote, allá arriba, sonríe.",ex:[
+      {img:"sumo_squat.png",title:"Sentadillas al aire",desc:"Baja la cadera solo hasta donde puedas mantener la espalda completamente recta, sin redondear la zona lumbar.",volume:"3 × 12–15",sets:3},
+      {img:"reverse_lunge.png",title:"Zancadas hacia atrás",desc:"Paso largo hacia atrás bajando la rodilla con control. Alterna piernas. Cero impacto, excelente para el glúteo.",volume:"3 × 10 / pierna",sets:3},
+      {img:"sumo_squat.png",title:"Sentadillas sumo",desc:"Pies más abiertos que los hombros, puntas a 45°. Baja la cadera con torso erguido empujando rodillas afuera.",volume:"3 × 10–12",sets:3}]},
+    7:{name:"Descanso Activo",type:"Recuperación",label:"Domingo · Día 7",proc:"Descanso activo. Pasea, respira, regenera. Así lo dispone la Orden.",ex:[
+      {img:"walk.png",title:"Caminata dinámica",desc:"Caminata de ritmo alegre para promover el flujo sanguíneo y aliviar rigideces lumbares.",volume:"30 min",sets:1},
+      {img:"dead_hang.png",title:"Cuelgues de descompresión",desc:"Al terminar la caminata, cuélgate de la barra alta para traccionar las vértebras.",volume:"2 × 30s",sets:2}]},
+  };
+
+  fmt(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+  load(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}
+
+  constructor(props){
+    super(props);
+    const today=new Date();
+    // reset de series si cambió el día
+    let completed=this.load('zp_completed',{});
+    if(localStorage.getItem('zp_completedDate')!==this.fmt(today)){completed={};}
+    const dow=today.getDay();
+    let history=this.load('zp_history',null);
+    let dogHist=this.load('zp_dog',null);
+    if(!history){
+      history={};
+      const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+      const dayBefore=new Date(); dayBefore.setDate(dayBefore.getDate()-2);
+      history[this.fmt(yesterday)]={dayNum:yesterday.getDay()===0?7:yesterday.getDay(),pct:100,done:8,total:8};
+      history[this.fmt(dayBefore)]={dayNum:dayBefore.getDay()===0?7:dayBefore.getDay(),pct:100,done:8,total:8};
+      try{localStorage.setItem('zp_history',JSON.stringify(history));}catch(e){}
+    }
+    if(!dogHist){
+      dogHist={};
+      const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+      const dayBefore=new Date(); dayBefore.setDate(dayBefore.getDate()-2);
+      dogHist[this.fmt(yesterday)]=true;
+      dogHist[this.fmt(dayBefore)]=true;
+      try{localStorage.setItem('zp_dog',JSON.stringify(dogHist));}catch(e){}
+    }
+    this.state={
+      activeDay: dow===0?7:dow,
+      exIndex:0,
+      completed,
+      history,
+      dogHist,
+      timerLeft:60, timerDuration:60, timerRunning:false, timerDone:false,
+      showCeleb:false, showDog:false, warmOpen:false,
+    };
+  }
+
+  persist(){
+    localStorage.setItem('zp_completed',JSON.stringify(this.state.completed));
+    localStorage.setItem('zp_completedDate',this.fmt(new Date()));
+    localStorage.setItem('zp_history',JSON.stringify(this.state.history));
+    localStorage.setItem('zp_dog',JSON.stringify(this.state.dogHist));
+  }
+
+  setsStats(day,completed){
+    const r=this.routines[day]; let total=0,done=0;
+    r.ex.forEach((e,i)=>{const eid=`d${day}_e${i+1}`;for(let s=1;s<=e.sets;s++){total++;if(completed[`${eid}_s${s}`])done++;}});
+    // calentamiento diario (2 ejercicios, todos los días) cuenta para el total
+    this.dailyWarmups.forEach((w,wi)=>{ total++; if(completed[`d${day}_w${wi}_s1`]) done++; });
+    return {total,done,pct:total?Math.round(done/total*100):0};
+  }
+
+  calcStreak(history){
+    let streak=0; let d=new Date();
+    const has=k=>history[k]&&history[k].pct>0;
+    if(!has(this.fmt(d))) d.setDate(d.getDate()-1);
+    while(has(this.fmt(d))){streak++;d.setDate(d.getDate()-1);}
+    return streak;
+  }
+
+  kilTitle(s){
+    if(s>=14)return "Kilinito, Soberano del Barrio";
+    if(s>=7)return "Kilinito, Duque de la Manzana";
+    if(s>=3)return "Kilinito, Conde de la Cuadra";
+    if(s>=1)return "Kilinito, Barón del Paseo";
+    return "Kilinito, Aspirante a Barón";
+  }
+
+  toggleSet(sid,e){
+    // Capturar las coordenadas del botón AHORA (sincrónico): en el callback de
+    // setState, React ya puso e.currentTarget=null y el confeti no saldría.
+    let cx=window.innerWidth/2, cy=window.innerHeight*0.5;
+    if(e&&e.currentTarget){ const r=e.currentTarget.getBoundingClientRect(); cx=r.left+r.width/2; cy=r.top+r.height/2; }
+    this.setState(prev=>{
+      const completed={...prev.completed};
+      const adding=!completed[sid];
+      if(adding) completed[sid]=true; else delete completed[sid];
+      const stats=this.setsStats(prev.activeDay,completed);
+      const history={...prev.history};
+      const key=this.fmt(new Date());
+      if(stats.done>0) history[key]={dayNum:prev.activeDay,pct:stats.pct,done:stats.done,total:stats.total};
+      else delete history[key];
+      return {completed,history};
+    }, ()=>{
+      this.persist();
+      const stats=this.setsStats(this.state.activeDay,this.state.completed);
+      if(this.state.completed[sid]) this.spawnBurst(cx, cy, 16);
+      if(this.state.completed[sid]){ this.resetTimer(); this.startTimer(); }
+      // celebración 100%
+      if(stats.pct===100){
+        const k=this.fmt(new Date());
+        if(localStorage.getItem('zp_lastCeleb')!==k){
+          localStorage.setItem('zp_lastCeleb',k);
+          setTimeout(()=>{ this.setState({showCeleb:true}); this.bigCelebration(); },420);
+        }
+      } else {
+        localStorage.removeItem('zp_lastCeleb');
+      }
+    });
+  }
+
+  mainExIndices(day){ const out=[]; this.routines[day].ex.forEach((e,i)=>{ if(!e.warmup) out.push(i); }); return out; }
+  animCard(dir){
+    const el=this.cardRef&&this.cardRef.current; if(!el) return;
+    el.style.animation='none'; void el.offsetWidth;
+    el.style.animation=`zp${dir>0?'Next':'Prev'} .34s cubic-bezier(.22,1,.36,1) both`;
+  }
+  goEx(dir){
+    const max=this.mainExIndices(this.state.activeDay).length-1;
+    const cur=Math.min(this.state.exIndex||0,max);
+    const i=cur+dir; if(i<0||i>max) return;
+    this.setState({exIndex:i},()=>this.animCard(dir));
+  }
+  setEx(i){
+    const max=this.mainExIndices(this.state.activeDay).length-1;
+    const cur=Math.min(this.state.exIndex||0,max);
+    if(i<0||i>max||i===cur) return;
+    const dir=i>cur?1:-1;
+    this.setState({exIndex:i},()=>this.animCard(dir));
+  }
+  toggleWarm(){ this.setState(prev=>({warmOpen:!prev.warmOpen})); }
+
+  toggleDog(){
+    this.setState(prev=>{
+      const dogHist={...prev.dogHist}; const k=this.fmt(new Date());
+      const adding=!dogHist[k];
+      if(adding) dogHist[k]=true; else delete dogHist[k];
+      return {dogHist, showDog:adding};
+    },()=>{ this.persist(); if(this.state.showDog) this.spawnBurst(window.innerWidth/2, window.innerHeight*0.42, 24); });
+  }
+
+  // ---- TIMER ----
+  startTimer(){
+    clearInterval(this._ti); this.setState({timerRunning:true,timerDone:false});
+    this._ti=setInterval(()=>{
+      this.setState(prev=>{
+        const left=prev.timerLeft-1;
+        if(left<=0){ clearInterval(this._ti); this.playBeep(); return {timerLeft:0,timerRunning:false,timerDone:true}; }
+        return {timerLeft:left};
+      });
+    },1000);
+  }
+  pauseTimer(){ clearInterval(this._ti); this.setState({timerRunning:false}); }
+  resetTimer(){ clearInterval(this._ti); this.setState(prev=>({timerLeft:prev.timerDuration,timerRunning:false,timerDone:false})); }
+  toggleTimer(){ if(this.state.timerRunning) this.pauseTimer(); else this.startTimer(); }
+  setPreset(sec){ clearInterval(this._ti); this.setState({timerDuration:sec,timerLeft:sec,timerRunning:false,timerDone:false}); }
+
+  playBeep(){
+    try{
+      const ctx=new (window.AudioContext||window.webkitAudioContext)();
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.value=620;
+      g.gain.setValueAtTime(0,ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.35,ctx.currentTime+0.05);
+      g.gain.linearRampToValueAtTime(0,ctx.currentTime+0.35);
+      o.start();o.stop(ctx.currentTime+0.36);
+    }catch(e){}
+  }
+
+  // ---- PARTICLES ----
+  componentDidMount(){
+    const c=this.canvasRef.current; if(!c) return;
+    this.pctx=c.getContext('2d'); this.particles=[]; this.launchers=[]; this._raf=null;
+    this._resize=()=>{c.width=window.innerWidth;c.height=window.innerHeight;};
+    this._resize(); window.addEventListener('resize',this._resize);
+    this.colors=['#8B5CF6','#C9A24B','#46B17A','#E8C878','#A78BFA','#F3EEE3'];
+  }
+  componentWillUnmount(){ clearInterval(this._ti); clearInterval(this._ci); cancelAnimationFrame(this._raf); window.removeEventListener('resize',this._resize); }
+
+  spawnBurst(x,y,count=16){
+    if(!this.pctx) return;
+    for(let i=0;i<count;i++){
+      const a=Math.random()*Math.PI*2, sp=Math.random()*4+2;
+      this.particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:Math.random()*3+2,g:0.1,o:1,decay:Math.random()*0.02+0.015,color:this.colors[Math.floor(Math.random()*this.colors.length)]});
+    }
+    if(!this._raf) this.animate();
+  }
+  bigCelebration(){
+    clearInterval(this._ci); let n=0;
+    this._ci=setInterval(()=>{
+      const c=this.canvasRef.current; if(!c) return;
+      this.launchers.push({x:Math.random()*c.width*0.8+c.width*0.1,y:c.height,ty:Math.random()*c.height*0.4+c.height*0.15,vx:(Math.random()*0.15-0.075)*8,vy:-(Math.random()*3+6),color:this.colors[Math.floor(Math.random()*this.colors.length)],done:false});
+      if(!this._raf) this.animate();
+      if(++n>=9) clearInterval(this._ci);
+    },340);
+  }
+  animate(){
+    const ctx=this.pctx, c=this.canvasRef.current; if(!ctx||!c) return;
+    ctx.clearRect(0,0,c.width,c.height);
+    if(!this.particles.length && !this.launchers.length){ this._raf=null; return; }
+    for(let i=this.launchers.length-1;i>=0;i--){
+      const l=this.launchers[i]; l.x+=l.vx; l.y+=l.vy;
+      if(l.vy>=0||l.y<=l.ty){ this.spawnBurst(l.x,l.y,42); this.launchers.splice(i,1); }
+      else { ctx.beginPath();ctx.arc(l.x,l.y,3.2,0,Math.PI*2);ctx.fillStyle=l.color;ctx.fill(); }
+    }
+    for(let i=this.particles.length-1;i>=0;i--){
+      const p=this.particles[i]; p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.o-=p.decay;
+      if(p.o<=0){ this.particles.splice(i,1); continue; }
+      ctx.save();ctx.globalAlpha=Math.max(0,p.o);ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();ctx.restore();
+    }
+    this._raf=requestAnimationFrame(()=>this.animate());
+  }
+
+  shareWhatsApp(){
+    const streak=this.calcStreak(this.state.history);
+    const r=this.routines[this.state.activeDay];
+    let t=`¡Decreto cumplido en Zopiplan! 🦅\n¡Gloria a la Orden del Zopilote!\n\n⚡ Racha: ${streak} ${streak===1?'día':'días'} de orden\n💪 Hoy: ${r.name} (${r.type})`;
+    if(this.state.dogHist[this.fmt(new Date())]) t+=`\n🐾 ${this.kilTitle(streak)} también ha paseado hoy. ¡Soberano!`;
+    t+=`\n\nCuidando la espalda, sumando consistencia. 🏛️`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(t)}`,'_blank');
+  }
+
+  resetAll(){
+    if(!confirm("¿Abdicar de tu linaje? La Orden borrará tu racha e historial de forma irreversible. No hay vuelta atrás.")) return;
+    ['zp_completed','zp_completedDate','zp_history','zp_dog','zp_lastCeleb'].forEach(k=>localStorage.removeItem(k));
+    clearInterval(this._ti);
+    this.setState({completed:{},history:{},dogHist:{},exIndex:0,timerLeft:60,timerDuration:60,timerRunning:false,timerDone:false,showCeleb:false,showDog:false});
+  }
+
+  buildHistory(){
+    const today=new Date(); today.setHours(0,0,0,0);
+    const dow=today.getDay(); const toMon=dow===0?6:dow-1;
+    const start=new Date(today); start.setDate(today.getDate()-toMon-21);
+    const todayStr=this.fmt(new Date());
+    const out=[]; const run=new Date(start);
+    for(let i=0;i<28;i++){
+      const ds=this.fmt(run); const entry=this.state.history[ds];
+      const runZero=new Date(run); runZero.setHours(0,0,0,0);
+      const future=runZero>today; const isToday=ds===todayStr;
+      let bg='rgba(255,255,255,0.02)', border='rgba(255,255,255,0.05)', fg='rgba(255,255,255,0.28)';
+      let title=`${run.getDate()}/${run.getMonth()+1}`;
+      if(future){ bg='transparent'; border='rgba(255,255,255,0.05)'; fg='rgba(255,255,255,0.15)'; title+=': por venir'; }
+      else if(entry){
+        if(entry.pct===100){ bg='#46B17A'; border='#46B17A'; fg='#0f120d'; }
+        else { bg='rgba(70,177,122,0.32)'; border='rgba(70,177,122,0.5)'; fg='#dfeee7'; }
+        title+=`: Día ${entry.dayNum} · ${entry.pct}%`;
+      } else { title+=': sin entrenar'; }
+      if(isToday){ border='#C9A24B'; fg=entry&&entry.pct===100?'#0f120d':'#E8C878'; title+=' (hoy)'; }
+      out.push({num:run.getDate(), bg, border, fg, title, paw:!!this.state.dogHist[ds]});
+      run.setDate(run.getDate()+1);
+    }
+    return out;
+  }
+
+  renderVals(){
+    const day=this.state.activeDay;
+    const r=this.routines[day];
+    const comp=this.state.completed;
+    // ---- ejercicio activo (carrusel) ----
+    // todos los ejercicios de la rutina van al carrusel; el calentamiento es global (abajo)
+    const mainIdx=r.ex.map((_,i)=>i);
+    const exCount=mainIdx.length;
+    const exPos=Math.min(this.state.exIndex||0, exCount-1);
+    const aeOrig=mainIdx[exPos];
+    const ae=r.ex[aeOrig];
+    const aeid=`d${day}_e${aeOrig+1}`;
+    const exSets=[];
+    for(let s=1;s<=ae.sets;s++){
+      const sid=`${aeid}_s${s}`; const on=!!comp[sid];
+      const sbg=on?"rgba(70,177,122,0.12)":"rgba(255,255,255,0.03)", sbd=on?"#46B17A":"rgba(255,255,255,0.08)", sfg=on?"#5FBF8E":"#9A9284";
+      exSets.push({label:(on?"✓ ":"")+(ae.sets===1?"Hecho":`Serie ${s}`), toggle:(ev)=>this.toggleSet(sid,ev),
+        style:`flex:1 1 74px;background:${sbg};border:1px solid ${sbd};color:${sfg};border-radius:11px;padding:9px 10px;font-size:0.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;font-family:'Space Grotesk'`});
+    }
+    const exImgEl=React.createElement('img',{src:ae.img,alt:ae.title,style:{width:'100%',height:'100%',objectFit:'cover',display:'block'}});
+    // estado de completado por ejercicio principal (para el mapa de puntos)
+    const exDone=mainIdx.map(oi=>{
+      const eid=`d${day}_e${oi+1}`;
+      for(let s=1;s<=r.ex[oi].sets;s++){ if(!comp[`${eid}_s${s}`]) return false; }
+      return true;
+    });
+    const activeDone=exDone[exPos];
+    const dots=mainIdx.map((oi,pos)=>{
+      const active=pos===exPos, done=exDone[pos];
+      const bg=done?'#46B17A':(active?'#8B5CF6':'rgba(255,255,255,0.2)');
+      return {active, done, w:active?'22px':'7px', bg, jump:()=>this.setEx(pos)};
+    });
+    const chevBase="position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;line-height:1;padding-bottom:3px;color:#F3EEE3;background:rgba(16,13,9,0.5);border:1px solid rgba(255,255,255,0.14);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);cursor:pointer;font-family:'Space Grotesk';z-index:3";
+    const prevChevStyle=chevBase+";left:10px"+(exPos===0?";opacity:0.22;pointer-events:none":"");
+    const nextChevStyle=chevBase+";right:10px"+(exPos===exCount-1?";opacity:0.22;pointer-events:none":"");
+    // calentamiento diario (desplegable) — mismos 2 ejercicios todos los días, IDs por día
+    const warmups=this.dailyWarmups.map((w,wi)=>{
+      const sid=`d${day}_w${wi}_s1`; const on=!!comp[sid];
+      const wbg=on?"rgba(70,177,122,0.12)":"rgba(255,255,255,0.03)", wbd=on?"#46B17A":"rgba(255,255,255,0.08)", wfg=on?"#5FBF8E":"#9A9284";
+      return {title:w.title, desc:w.desc, volume:w.volume, done:on, toggle:(ev)=>this.toggleSet(sid,ev),
+        btnLabel:on?"✓ Hecho":"Marcar como hecho",
+        btnStyle:`align-self:flex-start;background:${wbg};border:1px solid ${wbd};color:${wfg};border-radius:10px;padding:9px 18px;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Space Grotesk'`};
+    });
+    const hasWarmups=true;
+    const warmAllDone=warmups.every(w=>w.done);
+    const warmOpen=!!this.state.warmOpen;
+    const warmDotColor=warmAllDone?"#46B17A":"#C9A24B";
+    const warmSummary=warmAllDone?"Completado":`${warmups.filter(w=>w.done).length}/${warmups.length} hechos · 5 min`;
+    const warmSummaryColor=warmAllDone?"#5FBF8E":"#8C8475";
+    const warmChevron=warmOpen?"rotate(180deg)":"rotate(0deg)";
+    const stats=this.setsStats(day,comp);
+    const streak=this.calcStreak(this.state.history);
+
+    const days=[1,2,3,4,5,6,7].map(n=>{const a=n===day;return {dow:this.dows[n-1],num:`D${n}`,select:()=>this.setState({activeDay:n, exIndex:0}),
+      bg:a?"linear-gradient(135deg,#8B5CF6,#6D4DD0)":"rgba(255,255,255,0.03)", border:a?"rgba(255,255,255,0.18)":"rgba(255,255,255,0.07)", fg:a?"#ffffff":"#E0D8C9", sub:a?"rgba(255,255,255,0.8)":"#7E7668"};});
+
+    const dogDone=!!this.state.dogHist[this.fmt(new Date())];
+    const ratio=this.state.timerLeft/this.state.timerDuration;
+    const kilImg=React.createElement('img',{src:dogDone?"kilinito_happy.png":"kilinito_sad.png",alt:"Kilinito",style:{width:'100%',height:'100%',objectFit:'cover',filter:'grayscale(1) contrast(1.05) brightness(1.08)'}});
+    const trophy=React.createElement('img',{src:"victory_trophy.png",alt:"Trofeo",style:{width:'100%',height:'100%',objectFit:'cover',filter:'grayscale(1) contrast(1.05) brightness(1.05)'}});
+
+    return {
+      canvasRef:this.canvasRef,
+      streak,
+      dayName:r.name, dayType:r.type, dayLabel:r.label, proclamation:r.proc,
+      days,
+      exNum:exPos+1, exTotal:exCount,
+      exImgEl, exTitle:ae.title, exDesc:ae.desc, exVolume:ae.volume, exSets,
+      dots, activeDone, prevChevStyle, nextChevStyle,
+      hasWarmups, warmups, warmOpen, warmDotColor, warmSummary, warmSummaryColor, warmChevron,
+      onToggleWarm:()=>this.toggleWarm(),
+      onPrevEx:()=>this.goEx(-1), onNextEx:()=>this.goEx(1),
+      onSwipeStart:(ev)=>{this._swipeX=ev.clientX; this._swipeY=ev.clientY;},
+      onSwipeEnd:(ev)=>{ const dx=ev.clientX-(this._swipeX??ev.clientX); const dy=ev.clientY-(this._swipeY??ev.clientY); if(Math.abs(dx)>48 && Math.abs(dx)>Math.abs(dy)) this.goEx(dx<0?1:-1); },
+      cardRef:this.cardRef,
+      progressPct:`${stats.pct}%`, progressWidth:`${stats.pct}%`, progressLabel:`${stats.done}/${stats.total} series`,
+      // timer
+      ringCirc:this.ringCirc, ringOffset:this.ringCirc*(1-ratio),
+      ringColor:this.state.timerDone?'#46B17A':'#8B5CF6',
+      timerDisplay:`${this.state.timerLeft}s`,
+      timerStatus:this.state.timerDone?'¡Reposo cumplido!':this.state.timerRunning?'En reposo…':'A la orden',
+      timerBtnLabel:this.state.timerDone?'Reiniciar':this.state.timerRunning?'Pausar':'Iniciar',
+      onTimerToggle:()=>this.state.timerDone?this.resetTimer():this.toggleTimer(),
+      onPreset60:()=>this.setPreset(60), onPreset90:()=>this.setPreset(90), onTimerReset:()=>this.resetTimer(),
+      preset60Bg:this.state.timerDuration===60?"rgba(139,92,246,0.14)":"rgba(255,255,255,0.03)",
+      preset60Border:this.state.timerDuration===60?"rgba(139,92,246,0.5)":"rgba(255,255,255,0.08)",
+      preset90Bg:this.state.timerDuration===90?"rgba(139,92,246,0.14)":"rgba(255,255,255,0.03)",
+      preset90Border:this.state.timerDuration===90?"rgba(139,92,246,0.5)":"rgba(255,255,255,0.08)",
+      // kilinito
+      kilEl:kilImg, kilinitoTitle:dogDone?this.kilTitle(streak):"Kilinito el Abatido",
+      kilinitoStatus:dogDone?"Ha cumplido su paseo protocolar. Reposa, satisfecho.":"Aguarda su paseo protocolar de hoy.",
+      toggleDog:()=>this.toggleDog(),
+      dogLabel:dogDone?"✓ Su Excelencia ha paseado":"Conceder el paseo real",
+      dogBg:dogDone?"rgba(201,162,75,0.14)":"rgba(255,255,255,0.04)",
+      dogBorder:dogDone?"#C9A24B":"rgba(201,162,75,0.35)",
+      dogFg:dogDone?"#E8C878":"#E0D8C9",
+      // history
+      dowHeaders:this.dows, historyDays:this.buildHistory(),
+      // modals
+      showCeleb:this.state.showCeleb, showDog:this.state.showDog,
+      trophyEl:trophy,
+      onShare:()=>this.shareWhatsApp(),
+      onCloseCeleb:()=>{this.setState({showCeleb:false}); this.launchers=[];},
+      onCloseDog:()=>this.setState({showDog:false}),
+      onReset:()=>this.resetAll(),
+    };
+  }
+}
+</script>
+</body>
+</html>
